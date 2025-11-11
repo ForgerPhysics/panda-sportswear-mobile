@@ -133,4 +133,133 @@ Digunakan saat kita mencoba mengubah tampilan (UI) atau layout.
 menghancurkan state aplikasi dan menjalankan ulang aplikasi dari awal (dari fungsi main()).  
 Cara kerjana me reload semua kode aplikasi, tapi prosesnya jauh lebih cepat daripada kita tekan "Stop" lalu "Run" lagi, karena tidak perlu meng-compile ulang kode native (Java/Kotlin/Swift).  
 State: Dihapus total. Jika counter berada pada angka 123, setelah Hot Restart,angkanya akan kembali ke 0.  
-Digunakan saat kita mengubah sesuatu yang bukan UI (contohnya globalVariable, initState() dan sebagainya)
+Digunakan saat kita mengubah sesuatu yang bukan UI (contohnya globalVariable, initState() dan sebagainya)  
+
+
+<br>
+
+Tugas 8:Flutter Navigation, Layouts, Forms, and Input Elements  
+Nama : Ryan Gibran Purwacakra Sihaloho  
+Kelas : PBP - C  
+NPM : 2406419833  
+
+1. Jelaskan perbedaan antara Navigator.push() dan Navigator.pushReplacement() pada Flutter. Dalam kasus apa sebaiknya masing-masing digunakan pada aplikasi Football Shop kamu?  
+   
+   Navigator.push() menambahkan halaman baru (route) di atas halaman saat ini. Flutter secara otomatis menambahkan tombol back di AppBar halaman baru. Kalau user menekan tombol back, Flutter akan "melepas" atau pop() halaman teratas, dan halaman di bawahnya  akan muncul kembali di layar  
+   Push digunakan saat Saat kita mau masuk ke sebuah fitur dan berniat untuk kembali nantinya. Contohnya saat user menekan card "Create Product" di GridView pada halaman utama (menu.dart).  
+   
+   Navigator.pushReplacement() mengganti halaman saat ini dengan halaman baru.
+   Halaman lama  dihapus dari stack, dan halaman baru diletakkan di tempatnya.Karena halaman lama sudah tidak ada di stack, tidak ada tombol back otomatis yang merujuk ke sana. Menekan back di halaman baru akan memindahkan kita ke halaman apa pun yang ada di bawah halaman yang baru saja diganti.  
+   pushReplacement() digunakan saat user pindah ke bagian utama aplikasi yang berbeda, dimana kembali ke halaman sebelumnya tidak masuk akal. Contohnya saat user menekan "Tambah Produk" di LeftDrawer (menu samping).  
+
+2. Bagaimana kamu memanfaatkan hierarchy widget seperti Scaffold, AppBar, dan Drawer untuk membangun struktur halaman yang konsisten di seluruh aplikasi?  
+   
+   Scaffold (Pondasi / Kerangka): Ini adalah widget induk tingkat atas untuk setiap halaman.  menyediakan "slot" atau area yang sudah ditentukan untuk elemen-elemen umum halaman, seperti: appBar (slot untuk AppBar), drawer (slot untuk Drawer), body (slot untuk konten utama halaman)  
+   AppBar (Atap / Navigasi Atas): Ini adalah widget yang kita letakkan di slot appBar milik Scaffold  
+   Drawer (Menu Samping / Laci): Ini adalah widget yang kita letakkan di slot drawer milik Scaffold  
+
+   Untuk membangun konsistensi:  
+   1. Struktur yang Dapat Digunakan Kembali  
+        Daripada membangun ulang AppBar dan Drawer di setiap halaman, kita buat widget khusus (seperti LeftDrawer ).
+    2. Separation of Concerns  
+        Scaffold mengurus "DIMANA" (struktur dan posisi).  
+        AppBar dan Drawer mengurus "APA" (konten navigasi).  
+        body mengurus konten unik halaman tersebut (seperti GridView di MyHomePage atau Form di ProductFormPage).
+3. Dalam konteks desain antarmuka, apa kelebihan menggunakan layout widget seperti Padding, SingleChildScrollView, dan ListView saat menampilkan elemen-elemen form? Berikan contoh penggunaannya dari aplikasi kamu.  
+   
+   Padding: widget yang membungkus widget lain (diletakkan sebagai child) dan memberinya ruang kosong (spasi) di sekelilingnya.  
+   Kelebihan:  
+   Menciptakan White Space: Padding memberi "ruang bernapas" untuk elemen UI. Tanpa padding, teks dan tombol akan menempel langsung ke tepi layar atau menempel satu sama lain, sehingga keliatan sempit dan susah dibaca.  
+   Meningkatkan Estetika: Tampilan yang memiliki padding lebih rapi.  
+   Kontrol Granular: Kita bisa menentukan padding di semua sisi (EdgeInsets.all()), atau hanya di sisi tertentu  saja(EdgeInsets.symmetric() atau EdgeInsets.only()).  
+
+   ```
+    body: Form(
+     key: _formKey, 
+     child: SingleChildScrollView(
+       
+       padding: const EdgeInsets.all(16.0), // <--- ini paddingnya 
+       child: Column(
+         children: [
+           //...
+         ],
+       ),
+     ),
+   ),
+   ```  
+   
+   SingleChildScrollView: widget yang membungkus satu widget anak (biasanya Column  atau Row) dan membuatnya scrollable kalau kontennya melebihi ukuran layar.  
+   Kelebihan:  
+   Mencegah Overflow Error: kalau aplikasi memiliki Column dengan banyak widget yang lebih tinggi dari layar, Flutter akan menampilkan error overflow (garis-garis kuning-hitam). Hal ini dicegah dengan SingleChildScrollView  
+   Menangani keyboard: ketika user mengetuk TextFormField di bagian bawah formulir, keyboard muncul dan "mendorong" UI keatas. Tanpa scrolling, bidang yang sedang diketik bisa tersembunyi di balik keyboard. SingleChildScrollView memungkinkan user menscroll untuk melihat apa yang mereka ketik.  
+   Adaptif: Formulir yang mungkin muat di layar tablet pasti akan overflow di layar HP kecil. SingleChildScrollView membuat aplikasi berfungsi di semua ukuran layar.
+   ```
+    body: Form(
+     // ...
+     child: SingleChildScrollView( // <--- ini dia
+       child: Column(
+         children: [
+           TextFormField(controller: _nameController, ...),
+           TextFormField(controller: _priceController, ...),
+           TextFormField(controller: _descriptionController, ...),
+           // ... dan banyak input yang lain
+         ],
+       ),
+     ),
+   ),
+   ```  
+
+   ListView:menampilkan daftar widget child dan sudah otomatis scrollable  
+   Kelebihan:  
+   Bawaan Scrollable: Kita ga perlu membungkusnya lagi. ListView dibuat untuk digulir.  
+   Efisiensi Memori: Untuk daftar yang panjang (ratusan item), ListView.builder jauh lebih efisien karena hanya me-render item yang terlihat di layar (+ beberapa di luarnya), tidak seperti Column yang me-render semuanya sekaligus.  
+   Dinamis: Sempurna untuk menampilkan data dari database atau API, dimana kitatidak tahu berapa banyak item yang akan ada.  
+   ```
+      class LeftDrawer extends StatelessWidget {
+     // ...
+     @override
+     Widget build(BuildContext context) {
+       return Drawer(
+         child: ListView( // <--- "ahh, ini dia yang papa cari"
+           padding: EdgeInsets.zero,
+           children: [
+             DrawerHeader(...),
+             ListTile(
+               title: const Text('Halaman Utama'),
+               onTap: () { ... },
+             ),
+             ListTile(
+               title: const Text('Tambah Produk'),
+               onTap: () { ... },
+             ),
+             // Kalau tambahin 20 menu lagi di sini,
+             // ListView akan membuatnya bisa di-scroll.
+           ],
+         ),
+       );
+     }
+   }
+   ```  
+
+4. Bagaimana kamu menyesuaikan warna tema agar aplikasi Football Shop memiliki identitas visual yang konsisten dengan brand toko?  
+   
+   ```
+   //main.dart
+   class MyApp extends StatelessWidget {
+     // ...
+     @override
+     Widget build(BuildContext context) {
+       return MaterialApp(
+         // ...
+         theme: ThemeData(
+           
+           colorScheme: ColorScheme.fromSeed(seedColor: Colors.cyan) //<-- ini dia
+               .copyWith(secondary: Colors.green),
+         ), 
+         home: MyHomePage(),
+       );
+     }
+   }
+   ```  
+   Dengan mendefinisikan colorScheme di main.dart, kita tidak perlu hardcode warna (seperti Colors.blue atau Colors.red) di setiap widget. kita cukup call  warna tema yang sudah konsisten di menu.dart dan product_form_page.dart.
+   Kalau kita mau ganti warna tema aplikasi, cukup ganti kode satu baris pada main.dart.
