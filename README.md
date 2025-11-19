@@ -262,4 +262,94 @@ NPM : 2406419833
    }
    ```  
    Dengan mendefinisikan colorScheme di main.dart, kita tidak perlu hardcode warna (seperti Colors.blue atau Colors.red) di setiap widget. kita cukup call  warna tema yang sudah konsisten di menu.dart dan product_form_page.dart.
-   Kalau kita mau ganti warna tema aplikasi, cukup ganti kode satu baris pada main.dart.
+   Kalau kita mau ganti warna tema aplikasi, cukup ganti kode satu baris pada main.dart.  
+
+
+<br>
+Tugas 9: Integrasi Layanan Web Django dengan Aplikasi Flutter  
+Nama : Ryan Gibran Purwacakra Sihaloho  
+Kelas : PBP - C  
+NPM : 2406419833  
+
+1. Jelaskan mengapa kita perlu membuat model Dart saat mengambil/mengirim data JSON? Apa konsekuensinya jika langsung memetakan Map<String, dynamic> tanpa model (terkait validasi tipe, null-safety, maintainability)?   
+    
+   Kita perlu buat Model Dart saat mengambil atau mengirim data JSON karena hal ini lebih baik untuk struktur, keamanan tipe (type safety), dan pemeliharaan. Dengan menggunakan Model Dart, kita memisahkan data mentah (raw data) dari objek yang terstruktur dan aman (structured, safe object), merupakan best practice dalam pemrograman.  
+
+    Tanpa Model (Map<String, dynamic>):   
+Saat kita mengakses data, harus secara eksplisit melakukan casting (misalnya, data['nama'] as String?). Jika key ('nama') tidak ada atau nilainya bukan string, ini akan menyebabkan runtime error (kesalahan saat program berjalan) yang disebut CastError atau TypeError.
+Jika struktur JSON berubah (misalnya, key 'nama' diubah menjadi 'full_name'), kita harus mencari dan mengubah string key tersebut ('nama') di seluruh kode aplikasi secara manual.   
+
+    Dengan Model (Contoh: User class):   
+kita mendefinisikan bahwa properti name harus bertipe String dan age bertipe int. Kompiler akan memastikan tipe data sesuai. Kesalahan tipe akan dideteksi sebelum aplikasi berjalan (compile-time) 
+Kita hanya perlu mengubah nama properti (name menjadi fullName) di dalam kelas Model. Karena Dart adalah bahasa OOP, IDE akan secara otomatis menunjukkan semua tempat di mana properti lama digunakan, mempercepat proses rekaftoring dengan lebih aman
+
+2. Apa fungsi package http dan CookieRequest dalam tugas ini? Jelaskan perbedaan peran http vs CookieRequest.
+   
+   package http adalah alat dasar Flutter/Dart yang berfungsi sebagai "mesin" untuk semua komunikasi jaringan, memungkinkan aplikasi mengirimkan permintaan HTTP dasar (seperti GET, POST) dan menerima respons dari backend Django. Peran utamanya adalah menangani transfer data mentah dan mengelola kode status serta badan respons. P ini wajib digunakan untuk mengambil data JSON atau mengirim payload tanpa secara otomatis menangani cookie atau fitur kompleks lainnya.
+   
+   Sebaliknya, CookieRequest berfungsi sebagai manajemen sesion. Perannya adalah mengatasi kelemahan http standar, yaitu ketidakmampuan untuk secara otomatis menyimpan cookie yang diterima (Set-Cookie) dan melampirkannya kembali ke request berikutnya. Dalam konteks Django, ini penting untuk mempertahankan sesi user setelah login, sehingga setiap request terautentikasi berikutnya (misalnya, mengakses data profil) secara otomatis menyertakan cookie sesi yang diperlukan
+3. Jelaskan mengapa instance CookieRequest perlu untuk dibagikan ke semua komponen di aplikasi Flutter.  
+   
+   Instance CookieRequest perlu dibagikan ke semua komponen aplikasi Flutter untuk memastikan Session Consistency dan autentikasi yang berkelanjutan di seluruh aplikasi. Ketika user berhasil login ke backend Django, server akan mengirimkan cookie sesi (misalnya, sessionid) yang merupakan bukti status terautentikasi pengguna. Instance yang dibagikan ini berfungsi sebagai "toples cookie" (Cookie Jar) yang menyimpan cookie penting tersebut.
+
+    kalau setiap komponen atau layanan membuat instance klien HTTP-nya sendiri, instance baru tersebut tidak akan memiliki akses ke cookie sesi yang disimpan dari proses login sebelumnya. Konsekuensinya, setiap permintaan API berikutnya (seperti mengambil data pengguna atau melakukan transaksi) akan gagal dengan kode status otorisasi (401 atau 403) karena server Django akan menganggap permintaan tersebut datang dari pengguna yang belum terautentikasi (logged out). Oleh karena itu, dengan berbagi satu instance melalui Dependency Injection atau State Management (seperti Provider atau Riverpod), semua request, di mana pun asalnya di aplikasi, secara otomatis dapat melampirkan cookie sesi yang benar, mempertahankan status login user.
+
+4. Jelaskan konfigurasi konektivitas yang diperlukan agar Flutter dapat berkomunikasi dengan Django. Mengapa kita perlu menambahkan 10.0.2.2 pada ALLOWED_HOSTS, mengaktifkan CORS dan pengaturan SameSite/cookie, dan menambahkan izin akses internet di Android? Apa yang akan terjadi jika konfigurasi tersebut tidak dilakukan dengan benar?  
+   
+   konfigurasi untuk koneksi antara django dan flutter:  
+   1) Penggunaan Alamat Khusus 10.0.2.2  
+      Ketika kita menjalankan aplikasi Flutter di Android Emulator, emulator tersebut beroperasi di lingkungan virtualnya sendiri. Alamat localhost (127.0.0.1 atau localhost) dalam konteks emulator merujuk pada dirinya sendiri, bukan komputer host (tempat Django berjalan)  
+      10.0.2.2: Ini adalah alamat IP khusus yang diarahkan oleh Android Emulator untuk merujuk ke interface loopback (host PC).  
+      Kalau menggunakan 127.0.0.1 atau IP lokal PC, koneksi akan gagal karena emulator tidak dapat menemukan server Django, akan mendapatkan timeout atau SocketException.
+   2) Pengaturan ALLOWED_HOSTS di Django  
+      ALLOWED_HOSTS adalah fitur keamanan Django yang mencegah serangan HTTP Host header yang berbahaya. Ia mendefinisikan hostname atau IP mana saja yang diizinkan untuk melayani aplikasi Django.  
+      Selama pengembangan, selain menambahkan 127.0.0.1 dan mungkin IP lokal, kita wajib menambahkan 10.0.2.2 ke daftar ini agar request yang datang dari Android Emulator dapat diterima oleh Django. Jika kita mengembangkan Flutter Web,  kita perlu memasukkan domain localhost tempat Flutter Web berjalan.
+   3) Mengaktifkan CORS (Cross-Origin Resource Sharing)  
+      Pada umumnya, browser akan memblokir request lintas origin (Django berjalan di port 8000 dan Flutter Web berjalan di port 5000, atau Flutter Mobile/Web dianggap sebagai origin yang berbeda) demi keamanan.  
+      Menggunakan package django-cors-headers, kita mengonfigurasi CORS_ALLOWED_ORIGINS di Django untuk secara eksplisit mengizinkan origin Flutter(misalnya, http://localhost:5000 untuk Flutter Web atau origin khusus emulator).  
+      Kalau tidak mengaktifkan CORS, request HTTP yang berhasil mencapai Django mungkin akan diblokir oleh browser
+   4) Pengaturan SameSite / Cookie  
+      Standar browser modern dan sistem operasi (termasuk WebView pada aplikasi mobile) semakin membatasi cookies yang dikirim di seluruh situs (cross-site) untuk mencegah serangan CSRF (Cross-Site Request Forgery). Cookie Django sesi dan CSRF biasanya memiliki atribut SameSite=Lax  
+      Dalam konteks cross-origin (Flutter berkomunikasi dengan Django API), pengaturan SameSite yang terlalu ketat dapat mencegah cookie autentikasi dan CSRF Django dikirimkan bersama permintaan Flutter. Kita mungkin perlu menyesuaikan pengaturan sesi Django (terutama untuk menguji fitur otorisasi) atau memastikan client Flutter menangani cookie dengan benar.  
+      Jika Salahdalam melakukan pengaturan, Fitur autentikasi dan sesi tidak akan berfungsi. User bisa saja berhasil login, tetapi cookie sesi tidak terkirim di permintaan berikutnya, menyebabkan server mereturn 401 Unauthorized atau 403 Forbidden.
+   5) Izin Akses Internet di Android  
+      Secara default, aplikasi Android tidak memiliki izin untuk mengakses jaringan. Kita harus menambahkan baris 
+      ```<uses-permission android:name="android.permission.INTERNET"/>``` ke file AndroidManifest.xml Flutter. jika Jika Tidak ada izin akses, Aplikasi akan gagal membuat request jaringan, menghasilkan SocketException
+5. Jelaskan mekanisme pengiriman data mulai dari input hingga dapat ditampilkan pada Flutter.  
+   1) Pengiriman Data (Input di Flutter ke API Django)  
+      1) Input Pengguna (Flutter Widget): Pengguna memasukkan data melalui widget seperti TextField atau memilih opsi. Data ini disimpan dalam variabel lokal di State widget.
+      2) Konstruksi Model Dart: Data lokal dari State dikumpulkan dan diubah menjadi instance Model Dart yang telah ditentukan (misalnya, User atau Product). Ini memastikan type safety.
+      3) Serialisasi JSON (Encoding): Instance Model Dart dikonversi menjadi string berformat JSON menggunakan metode toJson() dalam model tersebut. Proses ini disebut Serialisasi atau Encoding.
+      4) Request HTTP: String JSON ini dikirim ke server Django menggunakan paket seperti http atau dio melalui permintaan POST atau PUT. Client HTTP akan secara otomatis menyisipkan header seperti Content-Type: application/json dan cookie sesi yang tersimpan (jika diperlukan autentikasi).
+      5) Penerimaan dan Deserialisasi (Django): Django API (melalui Django REST Framework / DRF) menerima permintaan HTTP. DRF menggunakan Serializer untuk mengambil string JSON, memvalidasi struktur datanya, dan mengubahnya menjadi objek Python (seperti dictionary atau instance model Django).
+      6) Penyimpanan Data (Django Database): Setelah data tervalidasi, logika View Django memproses objek Python tersebut dan menyimpannya ke Database (misalnya, PostgreSQL atau MySQL).
+   2) Penerimaan Data (API Django ke Tampilan Flutter)  
+      1) Pengambilan dan Serialisasi (Django): Ketika Flutter meminta data (misalnya, dengan permintaan GET), Django mengambil data yang diminta dari Database sebagai QuerySet atau objek model. DRF menggunakan Serializer untuk mengonversi objek Python tersebut kembali menjadi string JSON
+      2) Respons HTTP: Django mengirimkan string JSON tersebut sebagai badan respons HTTP, bersama dengan kode status (misalnya, 200 OK).
+      3) Penerimaan dan Deserialisasi (Flutter): Aplikasi Flutter menerima respons HTTP. Body respons JSON diambil sebagai string.
+      4) Konstruksi Model Dart (Decoding): String JSON diubah menjadi Map<String, dynamic>, dan kemudian data ini diteruskan ke factory constructor fromJson() dari Model Dart. Proses ini disebut Deserialisasi atau Decoding, menghasilkan instance Model Dart yang aman tipenya.
+      5) Manajemen Status dan Tampilan (Flutter): Instance Model Dart yang baru (misalnya, daftar Products) digunakan untuk memperbarui Status aplikasi (melalui Provider, Riverpod, Bloc, dll.). Pembaruan State ini memicu widget Flutter untuk rebuild (membuat ulang), dan data baru pun ditampilkan kepada pengguna di UI.
+6. Jelaskan mekanisme autentikasi dari login, register, hingga logout. Mulai dari input data akun pada Flutter ke Django hingga selesainya proses autentikasi oleh Django dan tampilnya menu pada Flutter.  
+   1) Proses Pendaftaran (Register)  
+      Pengguna memasukkan username, email, dan password di form Register. Data ini dienkapsulasi menjadi Model Dart (RegisterModel).    
+      Model Dart diserialisasi menjadi JSON string. Permintaan HTTP POST dikirim ke endpoint /register Django API.  
+      Serializer Django mengambil JSON, memvalidasi data (misalnya, password yang kuat, username unik). Jika valid, Django membuat akun baru dan menyimpan hash password di database.  
+      Django merespons dengan kode 201 Created dan mungkin menyertakan data pengguna baru serta token autentikasi.  
+      Flutter menerima respons, menyimpan token (misalnya, menggunakan package shared_preferences atau flutter_secure_storage) dan memperbarui State aplikasi ke status Authenticated.
+   2) Proses Masuk (Login)  
+      Pengguna memasukkan username/email dan password di form Login. Data menjadi Model Dart (LoginModel).  
+      Model diserialisasi ke JSON. Permintaan HTTP POST dikirim ke endpoint /login (biasanya melalui HTTPS).  
+      Django mengambil data, membandingkan password yang masuk dengan hash password yang tersimpan di database.  
+      Jika kredensial cocok, Django menerbitkan Token JWT (JSON Web Token) atau mengatur Cookie Sesi (jika menggunakan session-based auth).  
+      Flutter menerima respons. Token/Cookie disimpan secara persisten oleh client (menggunakan cookie client HTTP yang dibagikan atau penyimpanan lokal). State aplikasi diubah dari Unauthenticated menjadi Authenticated.  
+      Perubahan State memicu widget Flutter untuk rebuild. Layar Login disembunyikan, dan menu utama/dashboard ditampilkan.
+   3) Proses Akses Data Terautentikasi  
+      Permintaan HTTP GET dikirim ke endpoint yang dilindungi (misalnya, /api/profile).  
+      Client HTTP yang dibagikan (Cookie Client) secara otomatis melampirkan cookie sesi ATAU Flutter secara eksplisit menambahkan Header Autentikasi (Authorization: Bearer < Token>).  
+      Middleware Autentikasi Django (atau DRF) mengambil Token dari header atau cookie, memverifikasi validitasnya, dan mengaitkannya dengan instance pengguna yang sesuai.  
+      Jika valid, Django menjalankan View dan mengembalikan data yang diminta (JSON) dengan kode 200 OK.
+   4) Proses Keluar (Logout)  
+      Pengguna menekan tombol Logout. Permintaan HTTP POST dikirim ke endpoint /logout.  
+      Django menginvalidasi dan menghapus cookie sesi atau menghitamkan refresh token di database.  
+      Flutter menerima respons sukses (200 OK). Token/Cookie yang tersimpan di client storage dihapus.  
+      State aplikasi diubah kembali menjadi Unauthenticated, memicu rebuild UI untuk kembali menampilkan layar Login.

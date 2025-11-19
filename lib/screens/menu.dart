@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:panda_sportswear/screens/product_form_page.dart';
 import 'package:panda_sportswear/widgets/drawer.dart';
+import 'package:panda_sportswear/screens/product_entry_list.dart';
 
 class MyHomePage extends StatelessWidget {
   MyHomePage({super.key});
@@ -104,9 +105,19 @@ class ItemCard extends StatelessWidget {
             );
 
           if (item.name == "All Products") {
-            // ...
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProductEntryListPage(),
+              ),
+            );
           } else if (item.name == "My Products") {
-            // ...
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProductEntryListPage(),
+              ),
+            );
           } else if (item.name == "Create Product") {
             // Mengarahkan ke halaman formulir
             Navigator.push(
